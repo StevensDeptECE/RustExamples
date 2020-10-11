@@ -11,3 +11,11 @@ edition = "2018"
 [[bin]]
 name = "open_dict"
 path = "open_dict.rs"
+
+[[bin]]
+name = "args"
+path = "args.rs"
+
+[[bin]]
+name = "spellcheck"
+path = "spellcheck.rs"
