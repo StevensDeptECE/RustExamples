@@ -35,7 +35,7 @@ pub fn new(jd: f64) -> Self {
   Self { jd }
 }
 
-pub fn isLeapYear(y: i32) -> bool {
+pub fn is_leap_year(y: i32) -> bool {
     return y % 4 == 0 && y % 100 != 0 || y % 400 == 0;
 }
 

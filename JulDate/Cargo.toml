@@ -1,5 +1,5 @@
 [package]
-name = "JulDate"
+name = "jul_date"
 version = "0.1.0"
 edition = "2021"
 
