@@ -56,21 +56,20 @@ impl Node {
 
 
 
-use std::{hash::Hash, mem::MaybeUninit};
+use std::mem::MaybeUninit;
 
 struct BlockLoaderDict {
     mem: Vec<u8>,
-    symbol_count : usize,    // number of symbols
-    node_count : usize,      // number of nodes
+    symbolCount : u32,    // number of symbols
+    nodeCount : u32,      // number of nodes
     symbols: &[MaybeUninit<u8>],      // symbols
     nodes: &[MaybeUninit<Node>],      // nodes
-    table: &[u32],       // table of nodes, 0 = empty
+    table: &[MaybeUninit<u32>],       // table of nodes, 0 = empty
 }
 
 impl BlockLoaderDict {
     fn new(symbol_capacity : usize, node_capacity : usize, table_capacity : usize) -> BlockLoaderDict {
         use std::slice::from_raw_parts;
-        use std::slice::from_raw_parts_mut;
         use std::mem::size_of;
         let symbol_capacity = (symbol_capacity + 7) / 8 * 8;
 
@@ -81,60 +80,30 @@ impl BlockLoaderDict {
             Vec::with_capacity(size_of::<BlockLoader>() + total_capacity)
         };
 
+        //TODO use maybeuninit!
+
         let symbols = unsafe { 
             let sym_ptr = v.as_ptr().add(size_of::<BlockLoader>()) as *const MaybeUninit<u8>;
             let sym_slice: &[MaybeUninit<u8>] = from_raw_parts(sym_ptr, symbol_capacity); 
             sym_slice
         };
 
-        let nodes = unsafe { 
-            let node_ptr = symbols.as_ptr().add(symbol_capacity) as *mut MaybeUninit<Node>;
-            let node_slice: &mut [MaybeUninit<Node>] = from_raw_parts_mut(node_ptr, node_capacity);
-            node_slice
+        let nodes: &[Node] = unsafe { 
+            let node_ptr = symbols.as_ptr().add(symbol_capacity) as *mut Node;
+            from_raw_parts(node_ptr, node_capacity)
         };
 
-        let table: &[MaybeUninit<u32>] = unsafe {
-            let table_ptr = nodes.as_ptr().add(node_capacity) as *const MaybeUninit<u32>;
-            let table_slice: &[MaybeUninit<u32>] = from_raw_parts(table_ptr, table_capacity);
-            table_slice
+        let table: &[u32] = unsafe {
+            let table_ptr = nodes.as_ptr().add(node_capacity) as *const u32;
+            from_raw_parts(table_ptr, table_capacity)
         };
-
-        // set each table entry to 0
-        for i in 0..table_capacity {
-            table[i].write(0u32);
-        }
-
-        let table = unsafe { std::mem::transmute::<_, &[u32]>(table) };
-
 
         BlockLoaderDict {
-            mem: v,
-            symbol_count : 0,
-            node_count : 1,
+            symbolCount : 0,
+            nodeCount : 0,
             symbols,
             nodes,
             table, 
         }
-    }
-
-    fn add_symbol(&mut self, sym : u8, val : u32) {
-        use std::hash::{DefaultHasher, Hash, Hasher};
-
-        let mut state = DefaultHasher::new();
-        let ind = sym.hash(&mut state).finish() % self.table.len();
-        self.symbols[self.symbol_count].write(sym);
-        self.symbols[self.symbol_count].write('\0'.into());
-
-        if self.table[ind] == 0 {
-            self.table[ind] = self.node_count;
-            self.nodes[self.node_count].write(Node::new(self.symbol_count as u32, 0, val));
-            self.node_count += 1;
-        } else {
-            let old = self.table[ind];
-            self.table[ind] = self.node_count;
-            self.nodes[self.node_count].write(Node::new(self.symbol_count as u32, old, val));
-            self.node_count += 1;
-        }
-        self.symbol_count += 2;
-    }
+}
 }
