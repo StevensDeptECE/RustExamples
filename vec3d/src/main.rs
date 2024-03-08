@@ -1,3 +1,5 @@
+use std::ops::Add;
+use std::ops::Sub;
 
 #[derive(Debug)]
 #[derive(Clone)]
@@ -8,21 +10,29 @@ struct Vec3d {
     z: f64,
 }
 
-impl Vec3d {
-    fn add(&self, other: &Vec3d) -> Vec3d {
+impl Add for Vec3d {
+    type Output = Vec3d;
+    fn add(self, other: Vec3d) -> Vec3d {
         Vec3d {
             x: self.x + other.x,
             y: self.y + other.y,
             z: self.z + other.z,
         }
     }
-    fn sub(&self, other: &Vec3d) -> Vec3d {
+}
+
+impl Sub for Vec3d {
+    type Output = Vec3d;
+    fn sub(self, other: Vec3d) -> Vec3d {
         Vec3d {
             x: self.x - other.x,
             y: self.y - other.y,
             z: self.z - other.z,
         }
     }
+}
+
+impl Vec3d {
     fn dot(&self, other: &Vec3d) -> f64 {
         self.x * other.x + self.y * other.y + self.z * other.z
     }
@@ -35,11 +45,11 @@ impl Vec3d {
     }
 
     fn normalize(&self) -> Vec3d {
-        let m = self.abs();
+        let invm = 1.0 / self.abs();
         Vec3d {
-            x: self.x / m,
-            y: self.y / m,
-            z: self.z / m,
+            x: self.x * invm,
+            y: self.y * invm,
+            z: self.z * invm,
         }
     }
 
@@ -56,10 +66,10 @@ fn main() {
     let v1 = Vec3d { x: 1.0, y: 1.0, z: 1.0 };
     let v2 = Vec3d { x: 2.0, y: 1.0, z: 0.0 };
 
-    let v3 = v1.add(&v2);
-    let v4 = v1.sub(&v2);
-    let v5: Vec3d = v3; //v1 + v2;
-    let v6: Vec3d = v4; //v1 - v2;
+    let v3 = v1.add(v2);
+    let v4 = v1.sub(v2);
+    let v5: Vec3d = v1 + v2;
+    let v6: Vec3d = v1 - v2;
     let m = v1.magsq();
     let a = v1.abs();
     let v8 = v1.normalize();
